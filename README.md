@@ -20,3 +20,4 @@ Una herramienta avanzada para la distribución de comidas en las cocinas (galley
     ```bash
     npm run dev
     ```
+# galley-manager-pro
