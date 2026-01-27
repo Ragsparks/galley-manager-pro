@@ -7,13 +7,9 @@ import { Onboarding } from '../../components/Onboarding';
 import { calculateDistribution } from '../../utils/distribution';
 import { INITIAL_OPTIONS } from '../../constants';
 import type { Cart, DistributionResult, DistStrategy, Excess, MealOption } from '../../types';
-import { Moon, Sun, PlaneTakeoff, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Moon, Sun, PlaneTakeoff, HelpCircle } from 'lucide-react';
 
-interface GalleyAppProps {
-    onBack: () => void;
-}
-
-export const GalleyApp: React.FC<GalleyAppProps> = ({ onBack }) => {
+export const GalleyApp: React.FC = () => {
     // Navigation State
     const [step, setStep] = useState<number>(1);
     const [darkMode, setDarkMode] = useState<boolean>(false);
@@ -88,13 +84,6 @@ export const GalleyApp: React.FC<GalleyAppProps> = ({ onBack }) => {
             <div className="w-full max-w-lg bg-white dark:bg-slate-800 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700 transition-colors duration-300">
 
                 <header className="flex items-center justify-between mb-8">
-                    <button
-                        onClick={onBack}
-                        className="p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
-
                     <div className="flex items-center gap-3">
                         <div className="bg-[#800020] dark:bg-[#ff4d6d] p-2.5 rounded-2xl text-white shadow-lg shadow-[#800020]/20 dark:shadow-[#ff4d6d]/20">
                             <PlaneTakeoff size={20} />
