@@ -2,22 +2,26 @@ import { useState, useEffect } from 'react';
 import { StepStrategy } from './components/StepStrategy';
 import { StepInput } from './components/StepInput';
 import { StepResults } from './components/StepResults';
+import { DonateButton } from './components/DonateButton';
+import { Onboarding } from './components/Onboarding';
 import { calculateDistribution } from './utils/distribution';
 import { INITIAL_OPTIONS } from './constants';
-import type { Cart, DistributionResult, DistStrategy, Excess, InputMode, MealOption } from './types';
+import type { Cart, DistributionResult, DistStrategy, Excess, MealOption } from './types';
+import { Moon, Sun, PlaneTakeoff, HelpCircle } from 'lucide-react';
 
 const App = () => {
   // Navigation State
   const [step, setStep] = useState<number>(1);
-  
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+
   // Data State
-  const [inputMode, setInputMode] = useState<InputMode>('quantities');
   const [distStrategy, setDistStrategy] = useState<DistStrategy>('First Carts Full');
   const [numCarts, setNumCarts] = useState<number>(4);
-  const [totalLoad, setTotalLoad] = useState<string>('');
   const [options, setOptions] = useState<MealOption[]>(INITIAL_OPTIONS);
   const [cartSpecials, setCartSpecials] = useState<Record<number, number>>({});
-  
+  const [cartNames, setCartNames] = useState<Record<number, string>>({});
+
   // Result State
   const [carts, setCarts] = useState<Cart[]>([]);
   const [excess, setExcess] = useState<Excess | null>(null);
@@ -25,23 +29,30 @@ const App = () => {
   // Initialize specials map when cart number changes
   useEffect(() => {
     setCartSpecials(prev => {
-        const next = { ...prev };
-        // Ensure keys exist for current cart count
-        for(let i=1; i<=numCarts; i++) {
-            if (next[i] === undefined) next[i] = 0;
-        }
-        return next;
+      const next = { ...prev };
+      // Ensure keys exist for current cart count
+      for (let i = 1; i <= numCarts; i++) {
+        if (next[i] === undefined) next[i] = 0;
+      }
+      return next;
     });
   }, [numCarts]);
+
+  // Toggle Dark Mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const handleCalculate = () => {
     const result: DistributionResult = calculateDistribution(
       options,
       cartSpecials,
       numCarts,
-      distStrategy,
-      inputMode,
-      totalLoad
+      distStrategy
     );
     setCarts(result.carts);
     setExcess(result.excess);
@@ -50,26 +61,56 @@ const App = () => {
 
   const getStepIndicator = () => {
     return (
-        <div className="flex justify-center gap-2 mb-8">
-            {[1, 2, 3].map(i => (
-                <div 
-                    key={i} 
-                    className={`h-1.5 rounded-full transition-all duration-300 ${step === i ? 'w-8 bg-[#800020]' : 'w-2 bg-slate-200'}`}
-                />
-            ))}
-        </div>
+      <div className="flex justify-center gap-2 mb-8">
+        {[1, 2, 3].map(i => (
+          <div
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${step === i
+              ? 'w-8 bg-[#800020] dark:bg-[#ff4d6d]'
+              : 'w-2 bg-slate-200 dark:bg-slate-700'
+              }`}
+          />
+        ))}
+      </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#fcf9f9] text-slate-700 font-sans flex items-start justify-center p-4 md:p-8">
-      <div className="w-full max-w-2xl bg-white p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-slate-100">
-        
-        <header className="text-center mb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-[#800020] italic">
-            Galley Manager Pro
-          </h1>
-          <div className="h-0.5 w-10 bg-[#800020] mx-auto mt-2 rounded-full opacity-20"></div>
+    <div className="min-h-screen bg-[#fcf9f9] dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-sans flex items-start justify-center p-4 md:p-8 transition-colors duration-300">
+
+      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
+
+      <div className="w-full max-w-lg bg-white dark:bg-slate-800 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700 transition-colors duration-300">
+
+        <header className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#800020] dark:bg-[#ff4d6d] p-2.5 rounded-2xl text-white shadow-lg shadow-[#800020]/20 dark:shadow-[#ff4d6d]/20">
+              <PlaneTakeoff size={20} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white leading-none">
+                Galley Manager
+              </h1>
+              <span className="text-[10px] font-bold text-[#800020] dark:text-[#ff4d6d] tracking-widest uppercase">
+                Pro v2.1
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-all"
+            >
+              <HelpCircle size={18} />
+            </button>
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-all"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
         </header>
 
         {getStepIndicator()}
@@ -87,14 +128,12 @@ const App = () => {
         {step === 2 && (
           <StepInput
             onBack={() => setStep(1)}
-            inputMode={inputMode}
-            setInputMode={setInputMode}
-            totalLoad={totalLoad}
-            setTotalLoad={setTotalLoad}
             options={options}
             setOptions={setOptions}
             cartSpecials={cartSpecials}
             setCartSpecials={setCartSpecials}
+            cartNames={cartNames}
+            setCartNames={setCartNames}
             numCarts={numCarts}
             onCalculate={handleCalculate}
           />
@@ -105,8 +144,14 @@ const App = () => {
             onEdit={() => setStep(2)}
             carts={carts}
             excess={excess}
+            cartNames={cartNames}
+            onNameChange={(id, val) => setCartNames(prev => ({ ...prev, [id]: val }))}
           />
         )}
+
+        <footer className="mt-8 flex justify-center">
+          <DonateButton />
+        </footer>
       </div>
     </div>
   );

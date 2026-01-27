@@ -1,5 +1,4 @@
 export type DistStrategy = 'Equally' | 'First Carts Full';
-export type InputMode = 'quantities' | 'percentage';
 
 export interface ColorOption {
   key: string;
@@ -13,10 +12,10 @@ export interface ColorOption {
 export interface MealOption {
   id: string;
   name: string;
-  value: string; // Keep as string for input handling
+  value: string; // Input value (always integer quantity now)
   colorIdx: number;
-  count: number; // Calculated integer count
-  ratio: number;
+  count: number; // Parsed integer count
+  ratio: number; // Internal distribution ratio
 }
 
 export interface Cart {
