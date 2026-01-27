@@ -1,159 +1,40 @@
-import { useState, useEffect } from 'react';
-import { StepStrategy } from './components/StepStrategy';
-import { StepInput } from './components/StepInput';
-import { StepResults } from './components/StepResults';
-import { DonateButton } from './components/DonateButton';
-import { Onboarding } from './components/Onboarding';
-import { calculateDistribution } from './utils/distribution';
-import { INITIAL_OPTIONS } from './constants';
-import type { Cart, DistributionResult, DistStrategy, Excess, MealOption } from './types';
-import { Moon, Sun, PlaneTakeoff, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Dashboard } from './features/dashboard/Dashboard';
+import { GalleyApp } from './features/galley/GalleyApp';
+import { SafetyApp } from './features/safety/SafetyApp';
+import { LayoverApp } from './features/layover/LayoverApp';
+
+type AppView = 'dashboard' | 'galley' | 'safety' | 'layover';
 
 const App = () => {
-  // Navigation State
-  const [step, setStep] = useState<number>(1);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [currentView, setCurrentView] = useState<AppView>('dashboard');
 
-  // Data State
-  const [distStrategy, setDistStrategy] = useState<DistStrategy>('First Carts Full');
-  const [numCarts, setNumCarts] = useState<number>(4);
-  const [options, setOptions] = useState<MealOption[]>(INITIAL_OPTIONS);
-  const [cartSpecials, setCartSpecials] = useState<Record<number, number>>({});
-  const [cartNames, setCartNames] = useState<Record<number, string>>({});
 
-  // Result State
-  const [carts, setCarts] = useState<Cart[]>([]);
-  const [excess, setExcess] = useState<Excess | null>(null);
+  // We need to handle dark mode at the top level to ensure consistency across apps if desired,
+  // OR we let each app handle its own. GalleyApp handles its own.
+  // But Dashboard needs it too. Ideally, we lift it up.
+  // For now, let's keep it simple: separate concerns as mostly requested, but Dashboard supports dark mode classes.
+  // To make Dashboard dark mode work, we might need a global toggler or just rely on 'dark' class on html.
+  // GalleyApp toggles 'dark' class on document.documentElement. Use that.
 
-  // Initialize specials map when cart number changes
-  useEffect(() => {
-    setCartSpecials(prev => {
-      const next = { ...prev };
-      // Ensure keys exist for current cart count
-      for (let i = 1; i <= numCarts; i++) {
-        if (next[i] === undefined) next[i] = 0;
-      }
-      return next;
-    });
-  }, [numCarts]);
-
-  // Toggle Dark Mode
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+  const renderView = () => {
+    switch (currentView) {
+      case 'galley':
+        return <GalleyApp onBack={() => setCurrentView('dashboard')} />;
+      case 'safety':
+        return <SafetyApp onBack={() => setCurrentView('dashboard')} />;
+      case 'layover':
+        return <LayoverApp onBack={() => setCurrentView('dashboard')} />;
+      case 'dashboard':
+      default:
+        return <Dashboard onNavigate={(view) => setCurrentView(view)} />;
     }
-  }, [darkMode]);
-
-  const handleCalculate = () => {
-    const result: DistributionResult = calculateDistribution(
-      options,
-      cartSpecials,
-      numCarts,
-      distStrategy
-    );
-    setCarts(result.carts);
-    setExcess(result.excess);
-    setStep(3);
   };
 
-  const getStepIndicator = () => {
-    return (
-      <div className="flex justify-center gap-2 mb-8">
-        {[1, 2, 3].map(i => (
-          <div
-            key={i}
-            className={`h-1.5 rounded-full transition-all duration-300 ${step === i
-              ? 'w-8 bg-[#800020] dark:bg-[#ff4d6d]'
-              : 'w-2 bg-slate-200 dark:bg-slate-700'
-              }`}
-          />
-        ))}
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-[#fcf9f9] dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-sans flex items-start justify-center p-4 md:p-8 transition-colors duration-300">
-
-      {showOnboarding && <Onboarding onClose={() => setShowOnboarding(false)} />}
-
-      <div className="w-full max-w-lg bg-white dark:bg-slate-800 p-6 md:p-8 rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] dark:shadow-none border border-slate-100 dark:border-slate-700 transition-colors duration-300">
-
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#800020] dark:bg-[#ff4d6d] p-2.5 rounded-2xl text-white shadow-lg shadow-[#800020]/20 dark:shadow-[#ff4d6d]/20">
-              <PlaneTakeoff size={20} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white leading-none">
-                Galley Manager
-              </h1>
-              <span className="text-[10px] font-bold text-[#800020] dark:text-[#ff4d6d] tracking-widest uppercase">
-                Pro v2.1
-              </span>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowOnboarding(true)}
-              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-all"
-            >
-              <HelpCircle size={18} />
-            </button>
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-all"
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-        </header>
-
-        {getStepIndicator()}
-
-        {step === 1 && (
-          <StepStrategy
-            strategy={distStrategy}
-            setStrategy={setDistStrategy}
-            numCarts={numCarts}
-            setNumCarts={setNumCarts}
-            onNext={() => setStep(2)}
-          />
-        )}
-
-        {step === 2 && (
-          <StepInput
-            onBack={() => setStep(1)}
-            options={options}
-            setOptions={setOptions}
-            cartSpecials={cartSpecials}
-            setCartSpecials={setCartSpecials}
-            cartNames={cartNames}
-            setCartNames={setCartNames}
-            numCarts={numCarts}
-            onCalculate={handleCalculate}
-          />
-        )}
-
-        {step === 3 && (
-          <StepResults
-            onEdit={() => setStep(2)}
-            carts={carts}
-            excess={excess}
-            cartNames={cartNames}
-            onNameChange={(id, val) => setCartNames(prev => ({ ...prev, [id]: val }))}
-          />
-        )}
-
-        <footer className="mt-8 flex justify-center">
-          <DonateButton />
-        </footer>
-      </div>
-    </div>
+    <>
+      {renderView()}
+    </>
   );
 };
 

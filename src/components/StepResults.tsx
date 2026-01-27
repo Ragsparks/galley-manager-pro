@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Check, Copy, Edit2, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Copy, Edit2, Share2, X, Download } from 'lucide-react';
 import type { Cart, Excess } from '../types';
 import { COLOR_OPTIONS } from '../constants';
 import html2canvas from 'html2canvas';
@@ -10,171 +10,224 @@ interface StepResultsProps {
   excess: Excess | null;
   cartNames: Record<number, string>;
   onNameChange: (id: number, val: string) => void;
+  cartRows: Record<number, string>;
+  onRowChange: (id: number, val: string) => void;
 }
 
-export const StepResults: React.FC<StepResultsProps> = ({ onEdit, carts, excess, cartNames, onNameChange }) => {
-  const [copyStatus, setCopyStatus] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(false);
+export const StepResults: React.FC<StepResultsProps> = ({
+  onEdit, carts, excess, cartNames, onNameChange, cartRows, onRowChange
+}) => {
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
-  const handleCopy = async () => {
-    let text = `GALLEY MANIFEST\n`;
-    text += `================\n\n`;
-    carts.forEach(cart => {
-      const name = cartNames[cart.id] || `CART ${cart.id}`;
-      text += `${name.toUpperCase()} (${cart.normalAssigned + cart.specialCount})\n`;
-      if (cart.specialCount > 0) text += `[SPML: ${cart.specialCount}] `;
-
-      const items = cart.content
-        .filter(opt => opt.count > 0)
-        .map(opt => `${opt.count} ${opt.name}`)
-        .join(', ');
-
-      text += items + `\n\n`;
+  // Calculate Grand Totals for Summary (Carts + Excess)
+  const grandTotals: Record<string, number> = {};
+  carts.forEach(c => {
+    c.content.forEach(item => {
+      if (item.count > 0) {
+        grandTotals[item.name] = (grandTotals[item.name] || 0) + item.count;
+      }
     });
+  });
+  if (excess && excess.total > 0) {
+    excess.details.forEach(e => {
+      grandTotals[e.name] = (grandTotals[e.name] || 0) + e.count;
+    });
+  }
 
-    if (excess && excess.total > 0) {
-      text += `EXCESS (${excess.total})\n`;
-      excess.details.forEach(e => text += `- ${e.count} ${e.name}\n`);
-    }
-
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyStatus(true);
-      setTimeout(() => setCopyStatus(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy', err);
-    }
-  };
-
-  const handleSaveImage = async () => {
-    const element = document.getElementById('export-container'); // Target the dedicated export view
-    if (!element) return;
+  const handleGeneratePreview = async () => {
+    if (!exportRef.current || isGenerating) return;
 
     try {
-      setSaveStatus(true);
-      const canvas = await html2canvas(element, {
-        backgroundColor: '#ffffff', // Force white background
-        scale: 2 // High res
-      } as any);
+      setIsGenerating(true);
+      // Small delay to ensure render
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          setSaveStatus(false);
-          return;
-        }
-
-        const filename = `galley-manifest-${new Date().toISOString().slice(0, 10)}.png`;
-        const file = new File([blob], filename, { type: 'image/png' });
-
-        // 1. Try Native Share (Best for iOS/Safari)
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Galley Manifest',
-              text: 'Here is the flight distribution plan.'
-            });
-            setSaveStatus(false); // Share sheet handles the rest
-            return;
-          } catch (shareErr) {
-            console.warn('Share failed or cancelled, trying fallback', shareErr);
-          }
-        }
-
-        // 2. Fallback: Clipboard + Download
-        // Copy to Clipboard (for Notes)
-        try {
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': blob })
-          ]);
-        } catch (clipboardErr) {
-          console.warn('Clipboard write failed:', clipboardErr);
-        }
-
-        // Download Link
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        setTimeout(() => setSaveStatus(false), 2000);
+      const canvas = await html2canvas(exportRef.current, {
+        // @ts-ignore - html2canvas types are sometimes strict about extras
+        backgroundColor: '#ffffff',
+        scale: 2, // Retina quality
       });
 
+      const imgData = canvas.toDataURL('image/png');
+      setPreviewImage(imgData);
     } catch (err) {
-      console.error('Failed to save image', err);
-      setSaveStatus(false);
+      console.error('Screenshot failed:', err);
+    } finally {
+      setIsGenerating(false);
     }
   };
 
-  return (
-    <div className="space-y-6 animate-[zoomIn_0.3s_ease-out] bg-white dark:bg-slate-800 p-2 rounded-3xl">
+  const handleDownload = () => {
+    if (!previewImage) return;
+    const filename = `GalleyPro-${new Date().toISOString().slice(0, 10)}.png`;
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = previewImage;
+    link.click();
+  };
 
-      {/* Hidden Export Container - Rendered off-screen for perfect screenshots */}
+  const handleShare = async () => {
+    if (!previewImage) return;
+
+    try {
+      const blob = await (await fetch(previewImage)).blob();
+      const file = new File([blob], 'galley-distribution.png', { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Galley Manager Pro',
+          text: 'Flight Meal Distribution Plan'
+        });
+      } else {
+        alert('Share not supported on this device. Please use Save or Copy.');
+      }
+    } catch (err) {
+      console.error('Share failed', err);
+    }
+  };
+
+  const handleCopyImage = async () => {
+    if (!previewImage) return;
+    try {
+      const blob = await (await fetch(previewImage)).blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]);
+      alert('Image copied to clipboard!');
+    } catch (err) {
+      console.error('Copy failed', err);
+      alert('Could not copy image automatically. Please use Save/Download.');
+    }
+  };
+
+  // Calculate summary list
+  const summaryItems = Object.entries(grandTotals).map(([name, count]) => ({ name, count }));
+
+  return (
+    <div className="space-y-6 animate-[zoomIn_0.3s_ease-out] bg-white dark:bg-slate-800 p-2 rounded-3xl pb-24 md:pb-8">
+
+      {/* Modal for Screenshot Preview */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s]">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-4 shadow-2xl flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-slate-800 dark:text-white">Export Preview</h3>
+              <button onClick={() => setPreviewImage(null)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+              <img src={previewImage} alt="Preview" className="w-full h-auto object-contain" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={handleCopyImage} className="flex flex-col items-center gap-1 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                <Copy size={20} className="text-blue-500" />
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Copy</span>
+              </button>
+              <button onClick={handleDownload} className="flex flex-col items-center gap-1 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                <Download size={20} className="text-emerald-500" />
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Save</span>
+              </button>
+              <button onClick={handleShare} className="flex flex-col items-center gap-1 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                <Share2 size={20} className="text-purple-500" />
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Share</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden Export Container */}
       <div
-        id="export-container"
+        ref={exportRef}
         style={{
-          position: 'fixed',
+          position: 'absolute',
           left: '-9999px',
           top: 0,
-          width: '600px',
+          width: '600px', // Fixed width for consistency
           padding: '40px',
           backgroundColor: 'white',
-          color: 'black',
-          fontFamily: 'sans-serif',
-          zIndex: -1
+          color: '#333',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
         }}
       >
-        <div style={{ borderBottom: '2px solid #000', paddingBottom: '20px', marginBottom: '30px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0, textTransform: 'uppercase' }}>Galley Manifest</h1>
-          <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>{new Date().toLocaleDateString()}</p>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '3px solid #800020', paddingBottom: '20px', marginBottom: '30px' }}>
+          <div>
+            <h1 style={{ fontSize: '32px', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#800020', lineHeight: 1 }}>Galley Manager Pro</h1>
+            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666', letterSpacing: '2px', textTransform: 'uppercase' }}>Professional Manifest</span>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#333' }}>{new Date().toLocaleDateString()}</p>
+            <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>Generated via GalleyPro</p>
+          </div>
         </div>
 
+        {/* Summary Section */}
+        <div style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '15px 20px', marginBottom: '30px', border: '1px solid #e2e8f0' }}>
+          <h3 style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#475569', marginBottom: '10px' }}>Total Load Summary (Inc. Excess)</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {summaryItems.map((item, i) => (
+              <span key={i} style={{ backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: 'bold', color: '#334155' }}>
+                {item.count} {item.name}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Vertical Layout for Carts (1 per row) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {carts.map(cart => (
-            <div key={cart.id} style={{ border: '1px solid #ddd', borderRadius: '12px', padding: '20px', breakInside: 'avoid' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                <span style={{ fontSize: '18px', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                  {cartNames[cart.id] || `Cart ${cart.id}`}
-                </span>
-                <span style={{ fontSize: '14px', fontWeight: 'bold', backgroundColor: '#f0f0f0', padding: '4px 8px', borderRadius: '4px' }}>
-                  Total: {cart.normalAssigned + cart.specialCount}
-                </span>
+            <div key={cart.id} style={{ border: '2px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#fff' }}>
+              {/* Cart Header */}
+              <div style={{ backgroundColor: '#f1f5f9', padding: '12px 15px', borderBottom: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                    <span style={{ fontSize: '18px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a' }}>
+                      {cartNames[cart.id] || `Cart ${cart.id}`}
+                    </span>
+                    {cart.specialCount > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#be123c' }}>
+                        (SPMLs: {cart.specialCount})
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', backgroundColor: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                    Total Items: {cart.normalAssigned + cart.specialCount}
+                  </span>
+                </div>
+                {/* Row Info in Export */}
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', marginTop: '4px' }}>
+                  {cartRows[cart.id] ? `ROWS: ${cartRows[cart.id]}` : 'NO ROW ASSIGNED'}
+                </div>
               </div>
 
-              {cart.specialCount > 0 && (
-                <div style={{ marginBottom: '10px', color: '#b91c1c', fontWeight: 'bold', fontSize: '14px' }}>
-                  • {cart.specialCount} SPECIAL MEALS (SPML)
+              {/* Cart Content (One per line) */}
+              <div style={{ padding: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {cart.content.filter(i => i.count > 0).map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '15px', borderBottom: '1px dotted #e2e8f0', paddingBottom: '4px' }}>
+                      <span style={{ color: '#334155' }}>{item.name}</span>
+                      <span style={{ fontWeight: '800', color: '#0f172a' }}>{item.count}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
 
-              {cart.content.filter(i => i.count > 0).map((item, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', padding: '4px 0' }}>
-                  <span>{item.name}</span>
-                  <span style={{ fontWeight: 'bold' }}>{item.count}</span>
-                </div>
-              ))}
-
-              {cart.normalAssigned === 0 && cart.specialCount === 0 && (
-                <div style={{ color: '#999', fontStyle: 'italic', fontSize: '14px' }}>Empty Cart</div>
-              )}
+                {cart.normalAssigned === 0 && cart.specialCount === 0 && (
+                  <div style={{ textAlign: 'center', color: '#cbd5e1', fontStyle: 'italic', padding: '10px' }}>Empty</div>
+                )}
+              </div>
             </div>
           ))}
         </div>
-
-        {excess && excess.total > 0 && (
-          <div style={{ marginTop: '40px', backgroundColor: '#fff7ed', padding: '20px', borderRadius: '12px', border: '1px solid #fed7aa' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', color: '#9a3412', marginBottom: '10px' }}>Inventory Excess</h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-              {excess.details.map((e, i) => (
-                <span key={i} style={{ backgroundColor: 'white', padding: '5px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '14px', fontWeight: 'bold', color: '#9a3412' }}>
-                  {e.count} {e.name.toUpperCase()}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* Screen Controls */}
       <div className="flex items-center justify-between no-print mb-4">
         <button
           onClick={onEdit}
@@ -184,51 +237,56 @@ export const StepResults: React.FC<StepResultsProps> = ({ onEdit, carts, excess,
         </button>
         <div className="flex gap-2">
           <button
-            onClick={handleSaveImage}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase shadow-sm transition-all duration-300 ${saveStatus
-              ? 'bg-emerald-500 text-white'
-              : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              }`}
+            onClick={handleGeneratePreview}
+            disabled={isGenerating}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase shadow-sm transition-all duration-300 bg-slate-800 text-white hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500"
           >
-            {saveStatus ? <Check size={14} /> : <ImageIcon size={14} />}
-            {saveStatus ? 'Saved' : 'Save Img'}
-          </button>
-          <button
-            onClick={handleCopy}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase shadow-sm transition-all duration-300 ${copyStatus
-              ? 'bg-emerald-500 text-white'
-              : 'bg-slate-800 text-white hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500'
-              }`}
-          >
-            {copyStatus ? <Check size={14} /> : <Copy size={14} />}
-            {copyStatus ? 'Copied' : 'Copy Results'}
+            {isGenerating ? <span className="animate-spin">⏳</span> : <Share2 size={14} />}
+            Screenshot / Share
           </button>
         </div>
       </div>
 
+      {/* On-Screen Result Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {carts.map(cart => (
           <div
             key={cart.id}
-            className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow relative"
           >
-            <div className="bg-slate-50/80 dark:bg-slate-900/50 px-4 py-3 flex justify-between items-center border-b border-slate-100 dark:border-slate-700">
-              <div className="flex-1 min-w-0 mr-2 relative group">
-                <span className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300">
-                  <Edit2 size={10} />
-                </span>
+            <div className="bg-slate-50/80 dark:bg-slate-900/50 px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+              {/* Cart Name Input */}
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex-1 min-w-0 mr-2 relative group">
+                  <span className="absolute -left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300">
+                    <Edit2 size={10} />
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={`CART ${cart.id}`}
+                    value={cartNames[cart.id] || ''}
+                    onChange={(e) => onNameChange(cart.id, e.target.value)}
+                    className="w-full bg-transparent font-bold text-xs text-slate-700 dark:text-slate-200 uppercase tracking-wide outline-none border-b border-transparent focus:border-slate-300 dark:focus:border-slate-600 placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all"
+                  />
+                </div>
+                <div className="text-[10px] font-bold px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 shadow-sm shrink-0">
+                  Total: {cart.normalAssigned + cart.specialCount}
+                </div>
+              </div>
+
+              {/* Row Input */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Rows:</span>
                 <input
                   type="text"
-                  value={cartNames[cart.id] || `Cart ${cart.id}`}
-                  onChange={(e) => onNameChange(cart.id, e.target.value)}
-                  className="w-full bg-transparent font-bold text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wide outline-none focus:text-slate-700 dark:focus:text-slate-200 border-b border-transparent focus:border-slate-200 transition-all truncate"
-                  onFocus={(e) => e.target.select()}
+                  placeholder="e.g. 1-10"
+                  value={cartRows[cart.id] || ''}
+                  onChange={(e) => onRowChange(cart.id, e.target.value)}
+                  className="flex-1 bg-white dark:bg-slate-800/50 rounded-md border border-slate-100 dark:border-slate-700/50 px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 outline-none focus:border-slate-300 dark:focus:border-slate-500 transition-all"
                 />
               </div>
-              <div className="text-[10px] font-bold px-2 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400 shadow-sm shrink-0">
-                Total: {cart.normalAssigned + cart.specialCount}
-              </div>
             </div>
+
             <div className="p-4 flex-1 flex flex-col gap-2">
               {cart.specialCount > 0 && (
                 <div className="flex justify-between items-center px-2 py-1 bg-rose-50 dark:bg-rose-900/20 rounded-lg border border-rose-100 dark:border-rose-900/30 mb-1">
