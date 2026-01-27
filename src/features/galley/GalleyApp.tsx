@@ -162,9 +162,13 @@ export const GalleyApp: React.FC<GalleyAppProps> = ({ onBack }) => {
                         cartRows={cartRows}
                         onRowChange={(id, val) => setCartRows(prev => {
                             const next = { ...prev, [id]: val };
-                            // Auto-sync Cart 1 and 2 if interacting with Cart 1
-                            if (id === 1 && (prev[2] === undefined || prev[2] === prev[1] || prev[2] === '')) {
-                                next[2] = val;
+                            // Sync siblings (1-2, 3-4, 5-6, etc.)
+                            const isOdd = id % 2 !== 0;
+                            const partnerId = isOdd ? id + 1 : id - 1;
+
+                            // If updating odd cart, always try to sync even partner if it's "clean"
+                            if (isOdd && (prev[partnerId] === undefined || prev[partnerId] === prev[id] || prev[partnerId] === '')) {
+                                next[partnerId] = val;
                             }
                             return next;
                         })}
