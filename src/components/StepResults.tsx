@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Edit2, Share2, X, Download } from 'lucide-react';
+import { ArrowLeft, Copy, Edit2, Share2, X } from 'lucide-react';
 import type { Cart, Excess } from '../types';
 import { COLOR_OPTIONS } from '../constants';
 import html2canvas from 'html2canvas';
@@ -26,13 +26,16 @@ export const StepResults: React.FC<StepResultsProps> = ({
   carts.forEach(c => {
     c.content.forEach(item => {
       if (item.count > 0) {
-        grandTotals[item.name] = (grandTotals[item.name] || 0) + item.count;
+        // Store both name and color index for the dots in summary
+        const key = JSON.stringify({ name: item.name, colorIdx: item.colorIdx });
+        grandTotals[key] = (grandTotals[key] || 0) + item.count;
       }
     });
   });
   if (excess && excess.total > 0) {
     excess.details.forEach(e => {
-      grandTotals[e.name] = (grandTotals[e.name] || 0) + e.count;
+      const key = JSON.stringify({ name: e.name, colorIdx: e.colorIdx });
+      grandTotals[key] = (grandTotals[key] || 0) + e.count;
     });
   }
 
@@ -58,7 +61,7 @@ export const StepResults: React.FC<StepResultsProps> = ({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownloadFallback = () => {
     if (!previewImage) return;
     const filename = `GalleyPro-${new Date().toISOString().slice(0, 10)}.png`;
     const link = document.createElement('a');
@@ -81,56 +84,70 @@ export const StepResults: React.FC<StepResultsProps> = ({
           text: 'Flight Meal Distribution Plan'
         });
       } else {
-        alert('Share not supported on this device. Please use Save or Copy.');
+        handleDownloadFallback();
       }
     } catch (err) {
       console.error('Share failed', err);
+      handleDownloadFallback();
     }
   };
 
-  const summaryItems = Object.entries(grandTotals).map(([name, count]) => ({ name, count }));
+  const handleCopyImage = async () => {
+    if (!previewImage) return;
+    try {
+      const blob = await (await fetch(previewImage)).blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]);
+      alert('Image copied to clipboard!');
+    } catch (err) {
+      console.error('Copy failed', err);
+      alert('Could not copy image automatically. Please use long press on the image or the Share button.');
+    }
+  };
+
+  const summaryItems = Object.entries(grandTotals).map(([key, count]) => {
+    const { name, colorIdx } = JSON.parse(key);
+    return { name, count, colorIdx };
+  });
 
   return (
     <div className="space-y-6 animate-[zoomIn_0.3s_ease-out] bg-white dark:bg-slate-800 p-2 rounded-3xl pb-24 md:pb-8">
 
       {/* Modal for Screenshot Preview */}
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.2s]">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-4 shadow-2xl flex flex-col gap-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.1s]">
+          <div className="bg-white dark:bg-slate-800 rounded-[2rem] max-w-sm w-full p-6 shadow-2xl flex flex-col gap-6">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 dark:text-white">Export Preview</h3>
-              <button onClick={() => setPreviewImage(null)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full">
+              <h3 className="font-bold text-slate-800 dark:text-white">Preview & Share</h3>
+              <button onClick={() => setPreviewImage(null)} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-400">
                 <X size={20} />
               </button>
             </div>
 
-            <div className="bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
-              <img src={previewImage} alt="Preview" className="w-full h-auto object-contain" />
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700">
+              <img src={previewImage} alt="Preview" className="w-full h-auto object-contain max-h-[50vh]" />
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleCopyImage}
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+              >
+                <Copy size={24} className="text-blue-500" />
+                <span className="text-xs">Copy Image</span>
+              </button>
               <button
                 onClick={handleShare}
-                className="w-full flex items-center justify-center gap-3 p-4 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 rounded-2xl font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                className="flex flex-col items-center justify-center gap-2 p-4 bg-[#800020] text-white rounded-2xl font-bold shadow-lg shadow-[#800020]/20 hover:scale-[1.02] active:scale-95 transition-all"
               >
                 <Share2 size={24} />
-                <span>Share or Save Image</span>
+                <span className="text-xs">Share Image</span>
               </button>
-
-              <p className="text-[10px] text-center text-slate-400 dark:text-slate-500 font-medium px-4">
-                Use the share sheet to Copy, Save to Gallery, or send via WhatsApp/Telegram.
-              </p>
-
-              {!navigator.share && (
-                <button
-                  onClick={handleDownload}
-                  className="w-full mt-2 flex items-center justify-center gap-2 p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs"
-                >
-                  <Download size={16} />
-                  Download Manually
-                </button>
-              )}
             </div>
+            <p className="text-[10px] text-center text-slate-400 font-medium px-4">
+              Pro Tip: You can also long-press the image to copy or save.
+            </p>
           </div>
         </div>
       )}
@@ -153,23 +170,10 @@ export const StepResults: React.FC<StepResultsProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '3px solid #800020', paddingBottom: '20px', marginBottom: '30px' }}>
           <div>
             <h1 style={{ fontSize: '32px', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#800020', lineHeight: 1 }}>Galley Manager Pro</h1>
-            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666', letterSpacing: '2px', textTransform: 'uppercase' }}>Professional Manifest</span>
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#333' }}>{new Date().toLocaleDateString()}</p>
-            <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>Generated via GalleyPro</p>
-          </div>
-        </div>
-
-        {/* Summary Section */}
-        <div style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '15px 20px', marginBottom: '30px', border: '1px solid #e2e8f0' }}>
-          <h3 style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#475569', marginBottom: '10px' }}>Total Load Summary (Inc. Excess)</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {summaryItems.map((item, i) => (
-              <span key={i} style={{ backgroundColor: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: 'bold', color: '#334155' }}>
-                {item.count} {item.name}
-              </span>
-            ))}
+            <p style={{ margin: 0, fontSize: '12px', color: '#999' }}>Generated via Crew Suite</p>
           </div>
         </div>
 
@@ -177,60 +181,84 @@ export const StepResults: React.FC<StepResultsProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {carts.map(cart => (
             <div key={cart.id} style={{ border: '2px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#fff' }}>
-              <div style={{ backgroundColor: '#f1f5f9', padding: '12px 15px', borderBottom: '1px solid #e2e8f0' }}>
+              <div style={{ backgroundColor: '#f8fafc', padding: '15px 20px', borderBottom: '1px solid #e2e8f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                    <span style={{ fontSize: '18px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                    <span style={{ fontSize: '20px', fontWeight: '800', textTransform: 'uppercase', color: '#0f172a' }}>
                       {cartNames[cart.id] || `Cart ${cart.id}`}
                     </span>
                     {cart.specialCount > 0 && (
-                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#be123c' }}>
-                        (SPMLs: {cart.specialCount})
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#be123c', backgroundColor: '#fff1f2', padding: '2px 8px', borderRadius: '6px' }}>
+                        SPMLs: {cart.specialCount}
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', backgroundColor: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
-                    Total Items: {cart.normalAssigned + cart.specialCount}
+                  <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#64748b' }}>
+                    TOTAL: {cart.normalAssigned + cart.specialCount} ITEMS
                   </span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', marginTop: '4px' }}>
-                  {cartRows[cart.id] ? `ROWS: ${cartRows[cart.id]}` : 'NO ROW ASSIGNED'}
+                <div style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold', marginTop: '6px', letterSpacing: '0.5px' }}>
+                  {cartRows[cart.id] ? `ASSIGNED ROWS: ${cartRows[cart.id]}` : 'NO ROWS DEFINED'}
                 </div>
               </div>
 
-              <div style={{ padding: '15px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ padding: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {cart.content.filter(i => i.count > 0).map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '15px', borderBottom: '1px dotted #e2e8f0', paddingBottom: '4px' }}>
-                      <span style={{ color: '#334155' }}>{item.name}</span>
-                      <span style={{ fontWeight: '800', color: '#0f172a' }}>{item.count}</span>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1px solid #ddd', fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          {COLOR_OPTIONS[item.colorIdx].label}
+                        </div>
+                        <span style={{ color: '#0f172a', fontWeight: '500' }}>{item.name}</span>
+                      </div>
+                      <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '18px' }}>{item.count}</span>
                     </div>
                   ))}
                 </div>
                 {cart.normalAssigned === 0 && cart.specialCount === 0 && (
-                  <div style={{ textAlign: 'center', color: '#cbd5e1', fontStyle: 'italic', padding: '10px' }}>Empty</div>
+                  <div style={{ textAlign: 'center', color: '#cbd5e1', fontStyle: 'italic', padding: '10px', textTransform: 'uppercase', fontSize: '12px', fontWeight: 'bold' }}>Empty Cart</div>
                 )}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Summary Section (Now at the bottom) */}
+        <div style={{ marginTop: '40px', backgroundColor: '#fcf9f9', borderRadius: '20px', padding: '25px', border: '2px solid #edeff2' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '900', textTransform: 'uppercase', color: '#800020', marginBottom: '15px', letterSpacing: '1px' }}>Total Fleet Load Summary</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+            {summaryItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px 12px' }}>
+                <span style={{ fontSize: '14px' }}>{COLOR_OPTIONS[item.colorIdx].label}</span>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e293b', flex: 1 }}>{item.name}</span>
+                <span style={{ fontSize: '16px', fontWeight: '900', color: '#800020' }}>{item.count}</span>
+              </div>
+            ))}
+          </div>
+          {excess && excess.total > 0 && (
+            <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px dashed #cbd5e1' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 'bold', color: '#9a3412', textTransform: 'uppercase' }}>Excess Inventory: {excess.total} items remaining</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Screen Controls */}
-      <div className="flex items-center justify-between no-print mb-4">
+      <div className="flex items-center justify-between no-print mb-4 px-2">
         <button
           onClick={onEdit}
-          className="flex items-center gap-2 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase hover:text-slate-600 dark:hover:text-slate-300"
+          className="flex items-center gap-2 text-slate-400 dark:text-slate-500 font-bold text-xs uppercase hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
         >
-          <Edit2 size={12} /> Edit Inputs
+          <ArrowLeft size={16} /> Back
         </button>
         <div className="flex gap-2">
           <button
             onClick={handleGeneratePreview}
             disabled={isGenerating}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[10px] uppercase shadow-sm transition-all duration-300 bg-slate-800 text-white hover:bg-slate-900 dark:bg-slate-600 dark:hover:bg-slate-500"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold text-xs uppercase shadow-lg shadow-slate-200 dark:shadow-none transition-all duration-300 bg-slate-800 text-white hover:bg-slate-900 active:scale-95 disabled:opacity-50"
           >
-            {isGenerating ? <span className="animate-spin">⏳</span> : <Share2 size={14} />}
+            {isGenerating ? <span className="animate-spin text-lg">⏳</span> : <Share2 size={16} />}
             Screenshot / Share
           </button>
         </div>
