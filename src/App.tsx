@@ -1,9 +1,5 @@
 import { GalleyApp } from './features/galley/GalleyApp';
 
-const App = () => {
-  return (
-    <GalleyApp />
-  );
-};
+const App = () => <GalleyApp />;
 
 export default App;

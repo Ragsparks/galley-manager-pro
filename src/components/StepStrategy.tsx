@@ -47,7 +47,7 @@ export const StepStrategy: React.FC<StepStrategyProps> = ({
             <div className={`p-3 rounded-full transition-colors ${strategy === 'First Carts Full' ? 'bg-[#800020] text-white dark:bg-[#ff4d6d]' : 'bg-white dark:bg-slate-700'}`}>
               <LayoutGrid size={24} />
             </div>
-            <div className="font-bold text-xs uppercase">First carts fulls</div>
+            <div className="font-bold text-xs uppercase">First Carts Full <span className="ml-1 text-[9px] font-black text-emerald-600">DEFAULT</span></div>
           </button>
         </div>
       </section>

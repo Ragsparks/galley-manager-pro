@@ -13,6 +13,7 @@ interface StepInputProps {
   setCartNames: React.Dispatch<React.SetStateAction<Record<number, string>>>;
   numCarts: number;
   onCalculate: () => void;
+  calculationError: string | null;
 }
 
 export const StepInput: React.FC<StepInputProps> = ({
@@ -24,7 +25,8 @@ export const StepInput: React.FC<StepInputProps> = ({
   cartNames,
   setCartNames,
   numCarts,
-  onCalculate
+  onCalculate,
+  calculationError
 }) => {
 
 
@@ -43,7 +45,7 @@ export const StepInput: React.FC<StepInputProps> = ({
   const handleSpecialChange = (cartId: number, value: string) => {
     setCartSpecials(prev => ({
       ...prev,
-      [cartId]: Math.max(0, parseInt(value) || 0)
+      [cartId]: value.trim() === '' ? 0 : Number(value)
     }));
   };
 
@@ -158,6 +160,12 @@ export const StepInput: React.FC<StepInputProps> = ({
           })}
         </div>
       </div>
+
+      {calculationError && (
+        <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-300">
+          {calculationError}
+        </div>
+      )}
 
       <button
         onClick={onCalculate}
