@@ -1,9 +1,10 @@
 // SettingsView — SETTINGS page matching the notepad/editorial design image with safety modal.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { AppSettings } from '../features/galley/GalleyApp';
 import type { DistStrategy } from '../types';
 import { ChevronRight } from 'lucide-react';
+import QRCode from 'qrcode';
 
 interface SettingsViewProps {
   settings: AppSettings;
@@ -29,6 +30,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, updateSett
 
   // Safety confirmation modal state for critical settings
   const [pendingChange, setPendingChange] = useState<PendingChange | null>(null);
+
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    QRCode.toDataURL('https://galleypro.vercel.app', {
+      width: 180,
+      margin: 1,
+      color: {
+        dark: '#2A1B1F',
+        light: '#00000000'
+      }
+    })
+      .then(url => setQrDataUrl(url))
+      .catch(err => console.error(err));
+  }, []);
 
   const requestSettingChange = <K extends keyof AppSettings>(key: K, val: AppSettings[K]) => {
     if (settings[key] === val) return;
@@ -83,6 +99,41 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, updateSett
 
           <p className="t-body" style={{ margin: 0, fontSize: 18, lineHeight: 1.6 }}>
             I've also included a few personal tips. They're the ones that work for me, but everyone is free to work the way they like.
+          </p>
+        </div>
+
+        {/* Share app QR Code section */}
+        <div style={{ marginTop: 36, borderTop: '1px solid var(--sep)', paddingTop: 24, textAlign: 'center' }}>
+          <span className="t-label" style={{ marginBottom: 14, display: 'block' }}>
+            SHARE WITH CREW
+          </span>
+
+          <div style={{
+            display: 'inline-block',
+            padding: 12,
+            background: '#ffffff',
+            borderRadius: 6,
+            border: '1px solid var(--sep)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            {qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt="QR Code for https://galleypro.vercel.app"
+                style={{ width: 150, height: 150, display: 'block' }}
+              />
+            ) : (
+              <div style={{ width: 150, height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="t-sans" style={{ fontSize: 11, color: '#6B5B55' }}>Loading QR...</span>
+              </div>
+            )}
+          </div>
+
+          <p className="t-sans" style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 12, fontWeight: 500 }}>
+            https://galleypro.vercel.app
+          </p>
+          <p className="t-serif" style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--ink-3)', margin: '4px 0 0' }}>
+            Scan with any phone camera to open.
           </p>
         </div>
       </div>

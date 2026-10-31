@@ -28,35 +28,37 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const exportRef = useRef<HTMLDivElement>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   const now = new Date();
   const dateLabel = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     .toUpperCase();
 
-  // ── Share / screenshot ────────────────────────────────────
-  const handleShare = async () => {
-    if (!exportRef.current || isSharing) return;
+  // ── Render canvas image ────────────────────────────────────
+  const generateCanvasImage = async (): Promise<string | null> => {
+    if (!exportRef.current) return null;
+    await new Promise(r => setTimeout(r, 60));
+    const canvas = await html2canvas(exportRef.current, {
+      // @ts-ignore
+      backgroundColor: '#F3EDE2',
+      scale: 2,
+      useCORS: true,
+    });
+    return canvas.toDataURL('image/png');
+  };
+
+  // ── Share / screenshot modal ───────────────────────────────
+  const handleOpenShareModal = async () => {
+    if (isSharing) return;
     setIsSharing(true);
+    setCopyFeedback(null);
     try {
-      await new Promise(r => setTimeout(r, 80));
-      const canvas = await html2canvas(exportRef.current, {
-        // @ts-ignore
-        backgroundColor: '#F3EDE2',
-        scale: 2,
-        useCORS: true,
-      });
-      const dataUrl = canvas.toDataURL('image/png');
-
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], 'galley-plan.png', { type: 'image/png' });
-
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'Galley Manager Pro', text: 'Service plan' });
-      } else {
+      const dataUrl = await generateCanvasImage();
+      if (dataUrl) {
         setPreviewImg(dataUrl);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Screenshot generation failed:', err);
     } finally {
       setIsSharing(false);
     }
@@ -66,8 +68,67 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     if (!previewImg) return;
     const a = document.createElement('a');
     a.href = previewImg;
-    a.download = `GalleyPro-${new Date().toISOString().slice(0, 10)}.png`;
+    a.download = `GalleyPro-ServicePlan-${new Date().toISOString().slice(0, 10)}.png`;
     a.click();
+  };
+
+  const handleCopyToClipboard = async () => {
+    if (!previewImg) return;
+    try {
+      const blob = await (await fetch(previewImg)).blob();
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        setCopyFeedback('COPIED TO CLIPBOARD! PASTE INTO NOTES.');
+      } else {
+        throw new Error('ClipboardItem API not supported');
+      }
+    } catch (err) {
+      console.warn('Direct image copy failed, copying summary text fallback:', err);
+      // Fallback: copy clean text breakdown for notes app
+      let textSummary = `GALLEY MANAGER PRO - SERVICE PLAN (${dateLabel})\n\n`;
+      carts.forEach(cart => {
+        const label = cartNames[cart.id] || `CART ${cart.id}`;
+        const row = cartRows[cart.id] ? ` (${cartRows[cart.id]})` : '';
+        const spml = cart.specialCount > 0 ? ` [${cart.specialCount} SPML]` : '';
+        textSummary += `${label}${row}${spml}:\n`;
+        cart.content.forEach(item => {
+          if (item.count > 0) textSummary += `  • ${item.name}: ${item.count}\n`;
+        });
+        textSummary += '\n';
+      });
+      if (excess && excess.total > 0 && excess.details.length > 0) {
+        textSummary += `EXTRA MEALS, BY HAND:\n  ${excess.details.map(d => `${d.count} ${d.name}`).join(', ')}\n`;
+      }
+      try {
+        await navigator.clipboard.writeText(textSummary);
+        setCopyFeedback('PLAN SUMMARY COPIED TO CLIPBOARD!');
+      } catch (e) {
+        setCopyFeedback('COULD NOT COPY. PLEASE USE DOWNLOAD PNG.');
+      }
+    }
+    setTimeout(() => setCopyFeedback(null), 3500);
+  };
+
+  const handleNativeShare = async () => {
+    if (!previewImg) return;
+    try {
+      const blob = await (await fetch(previewImg)).blob();
+      const file = new File([blob], 'galley-service-plan.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Galley Manager Pro',
+          text: `Galley Service Plan - ${dateLabel}`
+        });
+      } else {
+        handleDownload();
+      }
+    } catch (err) {
+      console.error(err);
+      handleDownload();
+    }
   };
 
   return (
@@ -78,8 +139,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         <button className="back-btn" onClick={onBack}>
           ← BACK
         </button>
-        <button className="share-btn" onClick={handleShare} disabled={isSharing}>
-          {isSharing ? 'GENERATING…' : 'SHARE'}
+        <button className="share-btn" onClick={handleOpenShareModal} disabled={isSharing}>
+          {isSharing ? 'PREPARING…' : 'SHARE'}
         </button>
       </div>
 
@@ -192,7 +253,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         START NEW PLAN
       </button>
 
-      {/* Screenshot / image preview fallback modal */}
+      {/* Screenshot / Share options modal */}
       {previewImg && (
         <div
           className="anim-fadein"
@@ -204,23 +265,68 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         >
           <div style={{
             background: 'var(--bg)', maxWidth: 360, width: '100%',
-            padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
+            padding: 24, display: 'flex', flexDirection: 'column', gap: 14,
             borderTop: '2px solid var(--ink)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="t-label">PREVIEW &amp; SAVE</span>
+              <span className="t-label">SHARE SERVICE PLAN</span>
               <button
-                onClick={() => setPreviewImg(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--ink-3)', fontSize: 20, cursor: 'pointer' }}
-                aria-label="Close preview"
+                onClick={() => { setPreviewImg(null); setCopyFeedback(null); }}
+                style={{ background: 'none', border: 'none', color: 'var(--ink-3)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}
+                aria-label="Close"
               >
                 ×
               </button>
             </div>
-            <img src={previewImg} alt="Service plan preview" style={{ width: '100%', maxHeight: '55vh', objectFit: 'contain' }} />
-            <button className="calc-btn" onClick={handleDownload}>
-              DOWNLOAD PNG
-            </button>
+
+            <div style={{ border: '1px solid var(--sep)', background: 'var(--bg)', overflow: 'hidden' }}>
+              <img src={previewImg} alt="Service plan preview" style={{ width: '100%', maxHeight: '45vh', objectFit: 'contain', display: 'block' }} />
+            </div>
+
+            {copyFeedback && (
+              <div style={{
+                padding: '8px 12px',
+                background: 'rgba(110,18,48,0.08)',
+                borderLeft: '2px solid var(--accent)',
+                color: 'var(--accent)',
+                fontSize: 11,
+                fontFamily: 'Public Sans, sans-serif',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textAlign: 'center'
+              }}>
+                {copyFeedback}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              {/* Copy image / text to clipboard to save into Notes */}
+              <button className="calc-btn" onClick={handleCopyToClipboard}>
+                📋 COPY TO CLIPBOARD (SAVE IN NOTES)
+              </button>
+
+              {/* Download photo as PNG */}
+              <button className="ghost-btn" onClick={handleDownload}>
+                📥 DOWNLOAD PHOTO (PNG)
+              </button>
+
+              {/* Native share if available */}
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  onClick={handleNativeShare}
+                  className="t-label"
+                  style={{
+                    padding: '8px 0',
+                    textAlign: 'center',
+                    color: 'var(--ink-3)',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
+                >
+                  SEND VIA AIRDROP / MESSAGES
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

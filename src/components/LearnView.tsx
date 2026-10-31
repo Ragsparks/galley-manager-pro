@@ -15,11 +15,11 @@ interface AccordionItem {
 const FAQ_ITEMS: AccordionItem[] = [
   {
     q: 'Load every oven by cart',
-    a: 'Always load each oven in cart order. Filling cart 1 fully before moving to cart 2 keeps your oven assignment predictable and speeds up service.',
+    a: 'Each oven has a capacity of 32 casseroles. If you need to load 4 carts, you will need 5 ovens: you can dedicate one oven per cart, and group the remaining 8 casseroles from each cart into a shared common oven. This speeds up cart loading and prevents counting errors.',
   },
   {
-    q: 'How many ovens?',
-    a: 'The number of ovens depends on aircraft type. Long-haul narrow-bodies typically carry 2–4 ovens per galley. Check the galley configuration for your specific aircraft.',
+    q: 'How many casseroles per drawer?',
+    a: 'Load 14 to 16 casseroles per drawer to prevent crushing them. We recommend arranging 8 to 12 casseroles across the trays in whichever layout works best for you.',
   },
   {
     q: 'What are SPML?',
@@ -252,12 +252,9 @@ export const LearnView: React.FC<LearnViewProps> = ({ mealsPerCart }) => {
       <div className="sep-line" style={{ marginBottom: 24 }} />
 
       {/* ── Pro tips ───────────────────────────────────────── */}
-      <span className="t-label" style={{ marginBottom: 6, display: 'block' }}>
+      <span className="t-label" style={{ marginBottom: 12, display: 'block' }}>
         PRO TIPS
       </span>
-      <p className="t-serif" style={{ fontSize: 14, color: 'var(--ink-3)', marginBottom: 12, fontStyle: 'italic' }}>
-        Tap a tip to open it.
-      </p>
 
       <Accordion items={FAQ_ITEMS} />
     </div>
