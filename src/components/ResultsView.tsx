@@ -1,10 +1,12 @@
 // ResultsView — "Service plan" results page, notepad aesthetic matching the design image.
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Cart, Excess } from '../types';
 import html2canvas from 'html2canvas';
-import { Share, Copy } from 'lucide-react';
+import { Share, Copy, ChevronDown } from 'lucide-react';
 import { CartNameButton } from './CartNameButton';
+import { ShareCard } from './ShareCard';
+import { ResultsSummary } from './ResultsSummary';
 
 interface ResultsViewProps {
   carts: Cart[];
@@ -31,6 +33,13 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  // Bring the expanded info into view so the person doesn't have to hunt for it.
+  useEffect(() => {
+    if (infoOpen) infoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [infoOpen]);
 
   const now = new Date();
   const dateLabel = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -39,6 +48,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   // ── Render canvas image ────────────────────────────────────
   const generateCanvasImage = async (): Promise<string | null> => {
     if (!exportRef.current) return null;
+    // Wait for the web fonts: capturing with fallback fonts is what makes text get cut.
+    try { await document.fonts.ready; } catch { /* older browsers: carry on */ }
     await new Promise(r => setTimeout(r, 60));
     // Follow the current theme so dark mode doesn't export light text on cream.
     const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F3EDE2';
@@ -48,10 +59,11 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       scale: 2,
       useCORS: true,
       scrollX: 0,
-      scrollY: -window.scrollY, // avoids cropped / offset captures when the page is scrolled
+      scrollY: 0,
       onclone: (_doc: Document, el: HTMLElement) => {
-        // Breathing room so borders never touch (or get cut at) the image edge.
-        el.style.padding = '16px';
+        // The card lives off-screen; bring its clone to the origin so nothing is cropped.
+        const holder = el.parentElement;
+        if (holder) { holder.style.left = '0px'; holder.style.top = '0px'; }
       },
     };
     const canvas = await html2canvas(exportRef.current, options as unknown as Parameters<typeof html2canvas>[1]);
@@ -159,7 +171,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       </div>
 
       {/* Exportable canvas area */}
-      <div ref={exportRef} style={{ background: 'var(--bg)', padding: '4px 0' }}>
+      <div style={{ background: 'var(--bg)', padding: '4px 0' }}>
 
         {/* Title row */}
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -177,7 +189,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         {/* Cart grid with 1px subtle separator */}
         <div className="cart-grid">
           {carts.map(cart => {
-                        const rowLabel  = cartRows[cart.id]  || '';
+            const rowLabel  = cartRows[cart.id]  || '';
             const hasSPML   = cart.specialCount > 0;
 
             return (
@@ -204,7 +216,6 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                   value={rowLabel}
                   onChange={e => onRowChange(cart.id, e.target.value)}
                   placeholder="Rows …"
-                  {...(rowLabel ? {} : { 'data-html2canvas-ignore': 'true' })}
                   className="t-serif"
                   style={{
                     background: 'none', border: 'none', borderBottom: '1px solid var(--sep)',
@@ -263,6 +274,29 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       >
         START NEW PLAN
       </button>
+
+      {/* Footer link: expands the totals right here, no page change */}
+      <button
+        type="button"
+        className="t-label"
+        onClick={() => setInfoOpen(v => !v)}
+        aria-expanded={infoOpen}
+        style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '22px auto 0', color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3 }}
+      >
+        {infoOpen ? 'LESS INFO' : 'MORE INFO'}
+        <ChevronDown size={13} style={{ transform: infoOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+
+      {infoOpen && (
+        <div ref={infoRef} className="anim-fadein" style={{ scrollMarginTop: 12 }}>
+          <ResultsSummary carts={carts} excess={excess} />
+        </div>
+      )}
+
+      {/* Off-screen, fixed-width card that is captured for sharing (never visible) */}
+      <div aria-hidden="true" style={{ position: 'fixed', left: -10000, top: 0, pointerEvents: 'none' }}>
+        <ShareCard ref={exportRef} carts={carts} excess={excess} cartNames={cartNames} cartRows={cartRows} dateLabel={dateLabel} />
+      </div>
 
       {/* Share sheet: full preview (scrolls if tall) + pinned actions */}
       {previewImg && (

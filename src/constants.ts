@@ -24,3 +24,6 @@ export const CART_NAME_PRESETS: string[] = [
   'L3', 'R3', 'L4', 'R4', 'L5', 'R5',
   'L3A', 'R3A', 'L4A', 'R4A', 'L5A', 'R5A',
 ];
+
+// Colours for the three menu options in pie charts (same palette as the Learn page).
+export const MEAL_COLORS: string[] = ['#b5772a', '#6b2f6b', '#3d7a3d', '#2f5d8a', '#8a2f3f', '#6b6b2f'];

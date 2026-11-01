@@ -9,8 +9,73 @@ interface LearnViewProps {
 
 interface AccordionItem {
   q: string;
-  a: string;
+  a: React.ReactNode;
 }
+
+const SPML_GROUPS: { title: string; items: [string, string][] }[] = [
+  {
+    title: 'Vegetarian & vegan',
+    items: [
+      ['VGML', 'Fully plant-based; no meat, fish, dairy, eggs, or honey.'],
+      ['VLML', 'Western vegetarian; includes dairy and eggs, but no meat or seafood.'],
+      ['AVML', 'Indian-style vegetarian; includes spices and dairy, but no meat, fish, or eggs.'],
+      ['VJML', 'Jain vegetarian; plant-based with no root vegetables (onion, garlic, potatoes).'],
+      ['VOML', 'East Asian-style vegetarian; plant-based dishes only.'],
+      ['RVML', 'Uncooked raw fruits and vegetables only.'],
+      ['FPML', 'Fresh seasonal fruits only.'],
+    ],
+  },
+  {
+    title: 'Religious',
+    items: [
+      ['HNML', 'Indian-style non-vegetarian; poultry, lamb, or fish, but no beef or pork.'],
+      ['KSML', 'Certified Kosher food prepared under strict Jewish dietary laws.'],
+    ],
+  },
+  {
+    title: 'Medical & dietary',
+    items: [
+      ['DBML', 'Low-sugar, complex-carb meals for blood sugar control.'],
+      ['GFML', 'Free of wheat, rye, barley, and gluten.'],
+      ['LFML', 'Low in saturated fats and oils; lean protein and steamed veggies.'],
+      ['LSML', 'Prepared without added salt.'],
+      ['NLML', 'Free of milk and dairy products.'],
+      ['BLML', 'Soft, non-spicy, low-acid food for sensitive stomachs.'],
+    ],
+  },
+  {
+    title: 'Infant & child',
+    items: [
+      ['BBML', 'Strained pureed food for infants under 2 years.'],
+      ['CHML', "Kid-friendly meal for children aged 2\u201311."],
+      ['CVML', 'Vegetarian kid-friendly meal.'],
+    ],
+  },
+];
+
+const SpmlDetails = () => (
+  <div>
+    <p style={{ margin: '0 0 14px' }}>
+      SPML (Special Meals) are pre-ordered dietary options. They occupy real slots inside the cart,
+      so marking them prevents over-counting regular meals. Common codes:
+    </p>
+    {SPML_GROUPS.map(group => (
+      <div key={group.title} style={{ marginBottom: 14 }}>
+        <span className="t-label" style={{ display: 'block', color: 'var(--accent)', marginBottom: 6 }}>
+          {group.title}
+        </span>
+        {group.items.map(([code, def]) => (
+          <div key={code} style={{ display: 'flex', gap: 12, padding: '4px 0', lineHeight: 1.45 }}>
+            <span className="t-sans" style={{ width: 46, flexShrink: 0, fontSize: 13, fontWeight: 700, color: 'var(--ink)', paddingTop: 2 }}>
+              {code}
+            </span>
+            <span style={{ fontSize: 15 }}>{def}</span>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+);
 
 const FAQ_ITEMS: AccordionItem[] = [
   {
@@ -23,11 +88,11 @@ const FAQ_ITEMS: AccordionItem[] = [
   },
   {
     q: 'What are SPML?',
-    a: 'SPML (Special Meals) are pre-ordered dietary options — Kosher, Vegan, Low-fat, etc. They occupy real slots inside the cart, so marking them prevents over-counting regular meals.',
+    a: <SpmlDetails />,
   },
   {
     q: 'What does "excess" mean?',
-    a: 'Excess is the quantity that could not fit into any cart because all slots were already filled. Distribute it by hand from the pantry area.',
+    a: 'Excess is the quantity that could not fit into any cart because all slots were already filled. Distribute it by hand from the galley.',
   },
 ];
 

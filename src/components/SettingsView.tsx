@@ -152,7 +152,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, updateSett
           Extra Meals by Hand
         </h3>
         <p className="t-body" style={{ fontSize: 16, lineHeight: 1.65, margin: 0 }}>
-          Any meals exceeding the maximum capacity of all carts are displayed in a clean single-line breakdown to be distributed directly from pantry storage.
+          Any meals exceeding the maximum capacity of all carts are displayed in a clean single-line breakdown to be distributed by hand from the galley.
         </p>
       </div>
     );
