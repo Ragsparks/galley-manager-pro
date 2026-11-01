@@ -102,40 +102,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, updateSett
           </p>
         </div>
 
-        {/* Share app QR Code section */}
-        <div style={{ marginTop: 36, borderTop: '1px solid var(--sep)', paddingTop: 24, textAlign: 'center' }}>
-          <span className="t-label" style={{ marginBottom: 14, display: 'block' }}>
-            SHARE WITH CREW
-          </span>
-
-          <div style={{
-            display: 'inline-block',
-            padding: 12,
-            background: '#ffffff',
-            borderRadius: 6,
-            border: '1px solid var(--sep)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-          }}>
-            {qrDataUrl ? (
-              <img
-                src={qrDataUrl}
-                alt="QR Code for https://galleypro.vercel.app"
-                style={{ width: 150, height: 150, display: 'block' }}
-              />
-            ) : (
-              <div style={{ width: 150, height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="t-sans" style={{ fontSize: 11, color: '#6B5B55' }}>Loading QR...</span>
-              </div>
-            )}
-          </div>
-
-          <p className="t-sans" style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 12, fontWeight: 500 }}>
-            https://galleypro.vercel.app
-          </p>
-          <p className="t-serif" style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--ink-3)', margin: '4px 0 0' }}>
-            Scan with any phone camera to open.
-          </p>
-        </div>
+        <p className="t-serif" style={{ margin: '36px 0 0', fontSize: 13, fontStyle: 'italic', color: 'var(--ink-3)' }}>
+          Designed by: Ruben Alvarez
+        </p>
       </div>
     );
   }
@@ -380,6 +349,41 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ settings, updateSett
           <span style={{ fontSize: 18 }}>About GalleyPro</span>
           <span className="t-label" style={{ color: 'var(--ink-3)' }}>V2.1</span>
         </button>
+      </div>
+
+      {/* ── SHARE WITH CREW (QR) ───────────────────────────── */}
+      <div style={{ marginTop: 36, textAlign: 'center' }}>
+        <span className="t-label" style={{ marginBottom: 14, display: 'block' }}>
+          SHARE WITH CREW
+        </span>
+
+        <div style={{
+          display: 'inline-block',
+          padding: 12,
+          background: '#ffffff',
+          borderRadius: 6,
+          border: '1px solid var(--sep)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+        }}>
+          {qrDataUrl ? (
+            <img
+              src={qrDataUrl}
+              alt="QR Code for https://galleypro.vercel.app"
+              style={{ width: 150, height: 150, display: 'block' }}
+            />
+          ) : (
+            <div style={{ width: 150, height: 150, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="t-sans" style={{ fontSize: 11, color: '#6B5B55' }}>Loading QR...</span>
+            </div>
+          )}
+        </div>
+
+        <p className="t-sans" style={{ fontSize: 12, color: 'var(--ink-2)', marginTop: 12, fontWeight: 500 }}>
+          https://galleypro.vercel.app
+        </p>
+        <p className="t-serif" style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--ink-3)', margin: '4px 0 0' }}>
+          Scan with any phone camera to open.
+        </p>
       </div>
 
       {/* ── SAFETY CONFIRMATION MODAL ───────────────────────── */}

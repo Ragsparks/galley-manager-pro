@@ -253,15 +253,16 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 /* ── Share button ───────────────────────────────────────── */
 .share-btn {
-  border: 1.5px solid var(--accent); color: var(--accent);
-  background: transparent;
-  padding: 6px 14px;
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--accent); color: #fff;
+  padding: 9px 16px;
   font-family: 'Public Sans', system-ui, sans-serif;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  transition: background 0.13s, color 0.13s;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(110,18,48,0.28);
+  transition: background 0.13s, transform 0.13s;
 }
-.share-btn:active { background: var(--accent); color: #fff; }
-.share-btn:disabled { opacity: 0.5; }
+.share-btn:active { background: var(--accent-dk); transform: scale(0.97); }
+.share-btn:disabled { opacity: 0.55; }
 
 /* ── SPML badge ─────────────────────────────────────────── */
 .spml-badge {
@@ -345,4 +346,73 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
   font-family: 'Public Sans', system-ui, sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
   color: var(--ink-3); display: block; margin-bottom: 10px;
+}
+
+/* ── Clean fields (no underlines) ───────────────────────── */
+.field-name {
+  background: transparent; border: none; outline: none;
+  font-family: 'Newsreader', Georgia, serif; font-size: 20px;
+  color: var(--ink); width: 100%; padding: 8px 0;
+}
+.field-name::placeholder { color: var(--ink-3); }
+.field-name:focus { box-shadow: inset 0 -2px 0 var(--accent); }
+.field-count {
+  width: 76px; text-align: center;
+  font-family: 'Public Sans', system-ui, sans-serif; font-style: normal;
+  font-size: 22px; font-weight: 600; color: var(--ink);
+  background: var(--bg2); border: none; outline: none; padding: 9px 0;
+}
+.field-count::placeholder { color: var(--ink-3); font-weight: 400; }
+.field-count:focus { box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+/* ── Cart name: pill (input page) and large (results) ───── */
+.cart-name-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-width: 0; max-width: 100%;
+  background: var(--bg2); color: var(--ink);
+  padding: 7px 9px;
+  font-family: 'Public Sans', system-ui, sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.cart-name-pill:active { background: var(--sep); }
+.cart-name-large {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-width: 0; max-width: 100%; text-align: left;
+  color: var(--ink);
+  font-family: 'Public Sans', system-ui, sans-serif;
+  font-size: 22px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+  line-height: 1.1;
+}
+
+/* ── Bottom sheet (name picker) ─────────────────────────── */
+.sheet-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(3px);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet-box {
+  background: var(--bg); width: 100%; max-width: 480px;
+  max-height: 90dvh; overflow-y: auto;
+  padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+  border-top: 2px solid var(--ink);
+}
+.chip-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.name-chip {
+  height: 46px;
+  background: var(--bg2); color: var(--ink);
+  font-family: 'Public Sans', system-ui, sans-serif;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
+}
+.name-chip:active { background: var(--sep); }
+.name-chip.active { background: var(--accent); color: #fff; }
+.name-chip:disabled { opacity: 0.3; cursor: default; }
+.calc-btn:disabled { opacity: 0.45; }
+
+/* ── Share sheet actions ────────────────────────────────── */
+.share-action {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 52px;
+  font-family: 'Public Sans', system-ui, sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
 }

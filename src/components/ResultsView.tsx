@@ -3,6 +3,8 @@
 import React, { useRef, useState } from 'react';
 import type { Cart, Excess } from '../types';
 import html2canvas from 'html2canvas';
+import { Share, Copy } from 'lucide-react';
+import { CartNameButton } from './CartNameButton';
 
 interface ResultsViewProps {
   carts: Cart[];
@@ -38,12 +40,21 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const generateCanvasImage = async (): Promise<string | null> => {
     if (!exportRef.current) return null;
     await new Promise(r => setTimeout(r, 60));
-    const canvas = await html2canvas(exportRef.current, {
-      // @ts-ignore
-      backgroundColor: '#F3EDE2',
+    // Follow the current theme so dark mode doesn't export light text on cream.
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F3EDE2';
+    // html2canvas 1.4 options (the installed @types package is for 0.5, so type loosely)
+    const options = {
+      backgroundColor: bg,
       scale: 2,
       useCORS: true,
-    });
+      scrollX: 0,
+      scrollY: -window.scrollY, // avoids cropped / offset captures when the page is scrolled
+      onclone: (_doc: Document, el: HTMLElement) => {
+        // Breathing room so borders never touch (or get cut at) the image edge.
+        el.style.padding = '16px';
+      },
+    };
+    const canvas = await html2canvas(exportRef.current, options as unknown as Parameters<typeof html2canvas>[1]);
     return canvas.toDataURL('image/png');
   };
 
@@ -75,12 +86,11 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const handleCopyToClipboard = async () => {
     if (!previewImg) return;
     try {
-      const blob = await (await fetch(previewImg)).blob();
       if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]);
-        setCopyFeedback('COPIED TO CLIPBOARD! PASTE INTO NOTES.');
+        // Passing a promise keeps Safari's "user gesture" valid while the blob loads.
+        const blobPromise = fetch(previewImg).then(r => r.blob());
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+        setCopyFeedback('COPIED');
       } else {
         throw new Error('ClipboardItem API not supported');
       }
@@ -103,14 +113,15 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       }
       try {
         await navigator.clipboard.writeText(textSummary);
-        setCopyFeedback('PLAN SUMMARY COPIED TO CLIPBOARD!');
+        setCopyFeedback('COPIED AS TEXT');
       } catch (e) {
-        setCopyFeedback('COULD NOT COPY. PLEASE USE DOWNLOAD PNG.');
+        setCopyFeedback('COULD NOT COPY');
       }
     }
-    setTimeout(() => setCopyFeedback(null), 3500);
+    setTimeout(() => setCopyFeedback(null), 2500);
   };
 
+  // Opens the system share sheet (AirDrop, Messages, Save Image…). Falls back to a download on desktop.
   const handleNativeShare = async () => {
     if (!previewImg) return;
     try {
@@ -126,6 +137,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         handleDownload();
       }
     } catch (err) {
+      // Closing the share sheet is not an error — don't trigger a surprise download.
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       console.error(err);
       handleDownload();
     }
@@ -140,6 +153,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           ← BACK
         </button>
         <button className="share-btn" onClick={handleOpenShareModal} disabled={isSharing}>
+          <Share size={14} strokeWidth={2.4} />
           {isSharing ? 'PREPARING…' : 'SHARE'}
         </button>
       </div>
@@ -163,23 +177,19 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         {/* Cart grid with 1px subtle separator */}
         <div className="cart-grid">
           {carts.map(cart => {
-            const cartLabel = cartNames[cart.id] || `CART ${cart.id}`;
-            const rowLabel  = cartRows[cart.id]  || '';
+                        const rowLabel  = cartRows[cart.id]  || '';
             const hasSPML   = cart.specialCount > 0;
 
             return (
               <div key={cart.id} className="cart-cell">
-                {/* Cart header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 4 }}>
-                  <input
-                    type="text"
-                    value={cartLabel}
-                    onChange={e => onNameChange(cart.id, e.target.value)}
-                    className="t-label"
-                    style={{
-                      background: 'none', border: 'none', outline: 'none',
-                      color: 'var(--ink)', flex: 1, minWidth: 0,
-                    }}
+                {/* Cart header — large name, tap to pick L3 / R3 / … */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px 6px', marginBottom: 6 }}>
+                  <CartNameButton
+                    size="large"
+                    cartId={cart.id}
+                    name={cartNames[cart.id]}
+                    takenNames={carts.filter(c => c.id !== cart.id).map(c => cartNames[c.id]).filter((n): n is string => !!n)}
+                    onChange={val => onNameChange(cart.id, val)}
                   />
                   {hasSPML && (
                     <span className="spml-badge">
@@ -194,6 +204,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                   value={rowLabel}
                   onChange={e => onRowChange(cart.id, e.target.value)}
                   placeholder="Rows …"
+                  {...(rowLabel ? {} : { 'data-html2canvas-ignore': 'true' })}
                   className="t-serif"
                   style={{
                     background: 'none', border: 'none', borderBottom: '1px solid var(--sep)',
@@ -253,38 +264,42 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         START NEW PLAN
       </button>
 
-      {/* Screenshot / Share options modal */}
+      {/* Share sheet: full preview (scrolls if tall) + pinned actions */}
       {previewImg && (
         <div
           className="anim-fadein"
           style={{
             position: 'fixed', inset: 0, zIndex: 200,
             background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(3px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
           }}
         >
           <div style={{
-            background: 'var(--bg)', maxWidth: 360, width: '100%',
-            padding: 24, display: 'flex', flexDirection: 'column', gap: 14,
+            background: 'var(--bg)', maxWidth: 380, width: '100%',
+            maxHeight: '100%', display: 'flex', flexDirection: 'column',
+            padding: 18, gap: 12,
             borderTop: '2px solid var(--ink)',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="t-label">SHARE SERVICE PLAN</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <span className="t-label">SERVICE PLAN</span>
               <button
                 onClick={() => { setPreviewImg(null); setCopyFeedback(null); }}
-                style={{ background: 'none', border: 'none', color: 'var(--ink-3)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}
+                style={{ background: 'none', border: 'none', color: 'var(--ink-3)', fontSize: 24, cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
                 aria-label="Close"
               >
                 ×
               </button>
             </div>
 
-            <div style={{ border: '1px solid var(--sep)', background: 'var(--bg)', overflow: 'hidden' }}>
-              <img src={previewImg} alt="Service plan preview" style={{ width: '100%', maxHeight: '45vh', objectFit: 'contain', display: 'block' }} />
+            {/* The whole image is shown at full width; the area scrolls instead of cropping */}
+            <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid var(--sep)' }}>
+              <img src={previewImg} alt="Service plan preview" style={{ width: '100%', height: 'auto', display: 'block' }} />
             </div>
 
             {copyFeedback && (
               <div style={{
+                flexShrink: 0,
                 padding: '8px 12px',
                 background: 'rgba(110,18,48,0.08)',
                 borderLeft: '2px solid var(--accent)',
@@ -299,33 +314,19 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-              {/* Copy image / text to clipboard to save into Notes */}
-              <button className="calc-btn" onClick={handleCopyToClipboard}>
-                📋 COPY TO CLIPBOARD (SAVE IN NOTES)
+            {/* Two options only: copy, or the system share sheet (AirDrop, Save Image…) */}
+            <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+              <button className="calc-btn share-action" style={{ flex: 1, padding: 0 }} onClick={handleCopyToClipboard}>
+                <Copy size={17} /> COPY
               </button>
-
-              {/* Download photo as PNG */}
-              <button className="ghost-btn" onClick={handleDownload}>
-                📥 DOWNLOAD PHOTO (PNG)
+              <button
+                className="ghost-btn share-action"
+                style={{ width: 64, padding: 0, borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                onClick={handleNativeShare}
+                aria-label="Share, AirDrop or save to Photos"
+              >
+                <Share size={20} />
               </button>
-
-              {/* Native share if available */}
-              {typeof navigator !== 'undefined' && 'share' in navigator && (
-                <button
-                  onClick={handleNativeShare}
-                  className="t-label"
-                  style={{
-                    padding: '8px 0',
-                    textAlign: 'center',
-                    color: 'var(--ink-3)',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                  }}
-                >
-                  SEND VIA AIRDROP / MESSAGES
-                </button>
-              )}
             </div>
           </div>
         </div>

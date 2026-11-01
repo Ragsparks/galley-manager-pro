@@ -2,7 +2,8 @@
 
 import React from 'react';
 import type { MealOption } from '../types';
-import { Plus, Minus, X } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
+import { CartNameButton } from './CartNameButton';
 
 interface MealInputViewProps {
   numCarts: number;
@@ -32,17 +33,6 @@ export const MealInputView: React.FC<MealInputViewProps> = ({
   // ── Meal option handlers ─────────────────────────────────
   const updateOption = (idx: number, field: keyof MealOption, value: string | number) => {
     setOptions(options.map((o, i) => i === idx ? { ...o, [field]: value } : o));
-  };
-
-  const addOption = () => {
-    if (options.length >= 6) return;
-    const id = `opt${Date.now()}`;
-    setOptions([...options, { id, name: '', value: '', colorIdx: options.length % 4, count: 0, ratio: 0 }]);
-  };
-
-  const removeOption = (idx: number) => {
-    if (options.length <= 1) return;
-    setOptions(options.filter((_, i) => i !== idx));
   };
 
   const handleValueChange = (idx: number, raw: string) => {
@@ -88,28 +78,21 @@ export const MealInputView: React.FC<MealInputViewProps> = ({
       </h2>
 
       {/* ── Meal options ──────────────────────────────────── */}
-      <span className="t-label" style={{ marginBottom: 8, display: 'block' }}>
+      <span className="t-label" style={{ marginBottom: 6, display: 'block' }}>
         MENU ITEMS
       </span>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, borderTop: '1px solid var(--sep)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {options.map((opt, idx) => (
-          <div
-            key={opt.id}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '12px 0',
-              borderBottom: '1px solid var(--sep)',
-            }}
-          >
+          <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* Name input (Newsreader) */}
             <input
               type="text"
               value={opt.name}
               onChange={e => updateOption(idx, 'name', e.target.value)}
               placeholder={`Option ${idx + 1}`}
-              className="np-input"
-              style={{ flex: 1, fontSize: 18 }}
+              className="field-name"
+              style={{ flex: 1, minWidth: 0 }}
             />
 
             {/* Count input (Public Sans, strictly non-italic) */}
@@ -119,42 +102,12 @@ export const MealInputView: React.FC<MealInputViewProps> = ({
               value={opt.value}
               placeholder="0"
               onChange={e => handleValueChange(idx, e.target.value)}
-              className="t-num"
-              style={{
-                width: 70, textAlign: 'right', fontSize: 22, fontWeight: 600,
-                background: 'transparent', border: 'none', borderBottom: '1px solid var(--sep)',
-                color: 'var(--ink)', padding: '4px 0', outline: 'none'
-              }}
+              className="field-count"
+              aria-label={`${opt.name || `Option ${idx + 1}`} quantity`}
             />
-
-            {/* Remove button */}
-            {options.length > 1 && (
-              <button
-                onClick={() => removeOption(idx)}
-                style={{ color: 'var(--ink-3)', background: 'none', border: 'none', padding: 4, lineHeight: 1, flexShrink: 0 }}
-                aria-label="Remove option"
-              >
-                <X size={15} />
-              </button>
-            )}
           </div>
         ))}
       </div>
-
-      {/* Add option button in Public Sans */}
-      {options.length < 6 && (
-        <button
-          onClick={addOption}
-          className="t-label"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            marginTop: 14,
-            color: 'var(--accent)', cursor: 'pointer',
-          }}
-        >
-          <Plus size={14} /> ADD MEAL OPTION
-        </button>
-      )}
 
       {/* ── SPML per cart ─────────────────────────────────── */}
       <div style={{ marginTop: 32 }}>
@@ -162,32 +115,32 @@ export const MealInputView: React.FC<MealInputViewProps> = ({
           SPECIAL MEALS (SPML) PER CART
         </span>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px', borderTop: '1px solid var(--sep)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
           {Array.from({ length: numCarts }).map((_, i) => {
             const id = i + 1;
+            const taken = Array.from({ length: numCarts }, (_, k) => k + 1)
+              .filter(other => other !== id)
+              .map(other => cartNames[other])
+              .filter((n): n is string => !!n);
             return (
               <div
                 key={id}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '12px 0',
-                  borderBottom: '1px solid var(--sep)',
-                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, minWidth: 0 }}
               >
-                {/* Cart label / name */}
-                <input
-                  type="text"
-                  value={cartNames[id] ?? `Cart ${id}`}
-                  onChange={e => setCartNames(prev => ({ ...prev, [id]: e.target.value }))}
-                  className="t-label"
-                  style={{
-                    background: 'none', border: 'none', outline: 'none',
-                    color: 'var(--ink-2)', width: 60, flexShrink: 0,
-                  }}
+                {/* Cart name — tap to pick L3, R3, L4 … */}
+                <CartNameButton
+                  cartId={id}
+                  name={cartNames[id]}
+                  takenNames={taken}
+                  onChange={val => setCartNames(prev => {
+                    const next = { ...prev };
+                    if (val.trim()) next[id] = val.trim(); else delete next[id];
+                    return next;
+                  })}
                 />
 
                 {/* Stepper with Public Sans digits */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                   <button className="qty-step-btn" onClick={() => stepSpecial(id, -1)} aria-label="Decrease SPML">
                     <Minus size={13} />
                   </button>
@@ -198,7 +151,7 @@ export const MealInputView: React.FC<MealInputViewProps> = ({
                     onChange={e => handleSpecialChange(id, e.target.value)}
                     className="t-num"
                     style={{
-                      width: 32, textAlign: 'center', background: 'none', border: 'none', outline: 'none',
+                      width: 28, textAlign: 'center', background: 'none', border: 'none', outline: 'none',
                       fontSize: 18, fontWeight: 600, color: 'var(--accent)',
                     }}
                   />

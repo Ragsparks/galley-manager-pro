@@ -17,3 +17,10 @@ export const INITIAL_OPTIONS: MealOption[] = [
   { id: 'opt2', name: 'Beef',    value: '', colorIdx: 1, count: 0, ratio: 0 },
   { id: 'opt3', name: 'Pasta',   value: '', colorIdx: 2, count: 0, ratio: 0 },
 ];
+
+// Quick-pick names for carts (door position). Laid out in rows of 6 so
+// left/right pairs line up: L3 R3 L4 R4 L5 R5 / L3A R3A L4A R4A L5A R5A.
+export const CART_NAME_PRESETS: string[] = [
+  'L3', 'R3', 'L4', 'R4', 'L5', 'R5',
+  'L3A', 'R3A', 'L4A', 'R4A', 'L5A', 'R5A',
+];
