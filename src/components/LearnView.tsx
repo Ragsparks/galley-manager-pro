@@ -29,13 +29,13 @@ const SPML_GROUPS: { title: string; items: [string, string][] }[] = [
     title: 'Religious',
     items: [
       ['HNML', 'Indian-style non-vegetarian; poultry, lamb, or fish, but no beef or pork.'],
-      ['KSML', 'Certified Kosher food prepared under strict Jewish dietary laws.'],
+      ['KSML', 'Certified Kosher food prepared under strict Jewish dietary laws. (Present unopened to the passenger and heated in a separate oven).'],
     ],
   },
   {
     title: 'Medical & dietary',
     items: [
-      ['DBML', 'Low-sugar, complex-carb meals for blood sugar control.'],
+      ['DBML', 'Low-sugar, complex-carb meals for blood sugar control. (Delivered by hand before service starts).'],
       ['GFML', 'Free of wheat, rye, barley, and gluten.'],
       ['LFML', 'Low in saturated fats and oils; lean protein and steamed veggies.'],
       ['LSML', 'Prepared without added salt.'],
@@ -46,9 +46,9 @@ const SPML_GROUPS: { title: string; items: [string, string][] }[] = [
   {
     title: 'Infant & child',
     items: [
-      ['BBML', 'Strained pureed food for infants under 2 years.'],
-      ['CHML', "Kid-friendly meal for children aged 2\u201311."],
-      ['CVML', 'Vegetarian kid-friendly meal.'],
+      ['BBML', 'Strained pureed food for infants over 6 months.'],
+      ['CHML', "Child meal for children aged 2\u201311."],
+      ['CVML', 'Vegetarian child meal.'],
     ],
   },
 ];
@@ -87,12 +87,16 @@ const FAQ_ITEMS: AccordionItem[] = [
     a: 'Load 14 to 16 casseroles per drawer to prevent crushing them. We recommend arranging 8 to 12 casseroles across the trays in whichever layout works best for you.',
   },
   {
-    q: 'What are SPML?',
-    a: <SpmlDetails />,
+    q: 'Save the daily menu in Notes',
+    a: 'Download the menu of the day and save it in Notes. It sometimes disappears from the flight report on the Horizon, so keep your own copy.',
   },
   {
     q: 'What does "excess" mean?',
     a: 'Excess is the quantity that could not fit into any cart because all slots were already filled. Distribute it by hand from the galley.',
+  },
+  {
+    q: 'What are SPML?',
+    a: <SpmlDetails />,
   },
 ];
 
