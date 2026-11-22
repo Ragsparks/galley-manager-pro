@@ -1,5 +1,4 @@
-/* ── Google Fonts: Newsreader + Public Sans ─────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;1,6..72,300;1,6..72,400;1,6..72,600&family=Public+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap');
+/* Fonts are self-hosted (imported in main.tsx) so they work offline */
 
 /* ── Tailwind ───────────────────────────────────────────── */
 @tailwind base;
@@ -56,7 +55,7 @@ html, body, #root {
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: 'Newsreader Variable', Georgia, serif;
   font-size: 17px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -67,21 +66,21 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 /* ── Typography classes ─────────────────────────────────── */
 /* Newsreader: editorial serif — titles, body paragraphs, em highlights */
-.t-serif        { font-family: 'Newsreader', Georgia, serif; }
+.t-serif        { font-family: 'Newsreader Variable', Georgia, serif; }
 /* Public Sans: humanist sans — labels, nav, buttons, ALL numbers */
-.t-sans         { font-family: 'Public Sans', system-ui, sans-serif; }
+.t-sans         { font-family: 'Public Sans Variable', system-ui, sans-serif; }
 
 /* Titles */
-.t-title        { font-family: 'Newsreader', Georgia, serif; font-size: 38px; font-weight: 400; line-height: 1.08; color: var(--ink); }
-.t-subtitle     { font-family: 'Newsreader', Georgia, serif; font-size: 22px; font-style: italic; font-weight: 300; color: var(--ink-2); line-height: 1.3; }
-.t-section-h    { font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 400; line-height: 1.15; color: var(--ink); }
-.t-body         { font-family: 'Newsreader', Georgia, serif; font-size: 17px; font-weight: 400; line-height: 1.65; color: var(--ink-2); }
+.t-title        { font-family: 'Newsreader Variable', Georgia, serif; font-size: 38px; font-weight: 400; line-height: 1.08; color: var(--ink); }
+.t-subtitle     { font-family: 'Newsreader Variable', Georgia, serif; font-size: 22px; font-style: italic; font-weight: 300; color: var(--ink-2); line-height: 1.3; }
+.t-section-h    { font-family: 'Newsreader Variable', Georgia, serif; font-size: 30px; font-weight: 400; line-height: 1.15; color: var(--ink); }
+.t-body         { font-family: 'Newsreader Variable', Georgia, serif; font-size: 17px; font-weight: 400; line-height: 1.65; color: var(--ink-2); }
 /* Label (uppercase sans) */
-.t-label        { font-family: 'Public Sans', system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3); }
+.t-label        { font-family: 'Public Sans Variable', system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3); }
 /* Numbers — always Public Sans, never italic */
-.t-num          { font-family: 'Public Sans', system-ui, sans-serif; font-style: normal !important; }
+.t-num          { font-family: 'Public Sans Variable', system-ui, sans-serif; font-style: normal !important; }
 /* Big cart numbers */
-.t-big-num      { font-family: 'Public Sans', system-ui, sans-serif; font-size: 42px; font-weight: 300; line-height: 1.0; color: var(--ink); font-style: normal; }
+.t-big-num      { font-family: 'Public Sans Variable', system-ui, sans-serif; font-size: 42px; font-weight: 300; line-height: 1.0; color: var(--ink); font-style: normal; }
 
 /* ── Animations ─────────────────────────────────────────── */
 @keyframes fadeUp {
@@ -102,13 +101,13 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   border-bottom: 2px solid var(--ink);
 }
 .np-logo {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: 'Newsreader Variable', Georgia, serif;
   font-size: 21px; font-weight: 400; color: var(--ink);
   letter-spacing: -0.01em;
 }
 .np-logo em { font-style: italic; color: var(--accent); }
 .np-version {
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
   color: var(--ink-3); font-style: normal;
 }
@@ -125,7 +124,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .tab-btn {
   flex: 1; height: 52px;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--ink-3);
   transition: color 0.18s;
@@ -159,7 +158,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   display: flex; align-items: center; justify-content: center;
   border: 0.5px solid var(--sep); border-radius: 0;
   background: transparent;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 28px; font-weight: 300; font-style: normal;
   color: var(--ink);
   transition: background 0.12s;
@@ -184,7 +183,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   display: flex; align-items: center; justify-content: space-between;
   padding: 15px 0;
   border-bottom: 1px solid var(--sep);
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: 'Newsreader Variable', Georgia, serif;
   font-size: 18px; color: var(--ink);
 }
 
@@ -196,7 +195,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .theme-btn {
   padding: 11px 0; text-align: center;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--ink-3); background: transparent;
   transition: background 0.18s, color 0.18s;
@@ -206,7 +205,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 /* ── Text inputs ────────────────────────────────────────── */
 .np-input {
   background: transparent; border: none; border-bottom: 1px solid var(--sep);
-  font-family: 'Newsreader', Georgia, serif; font-size: 17px;
+  font-family: 'Newsreader Variable', Georgia, serif; font-size: 17px;
   color: var(--ink); width: 100%; padding: 5px 0; outline: none;
   transition: border-color 0.18s;
 }
@@ -215,7 +214,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 /* Numbers in inputs: Public Sans, never italic */
 input[type="number"] {
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-style: normal;
   -moz-appearance: textfield;
 }
@@ -224,7 +223,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 /* ── Back button ────────────────────────────────────────── */
 .back-btn {
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--accent); display: flex; align-items: center; gap: 6px;
   transition: opacity 0.15s;
@@ -235,7 +234,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 .calc-btn {
   width: 100%; padding: 15px;
   background: var(--accent); color: #fff;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase;
   transition: background 0.15s;
 }
@@ -245,7 +244,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 .ghost-btn {
   width: 100%; padding: 13px;
   border: 1px solid var(--sep); color: var(--ink-2);
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
   transition: border-color 0.15s, color 0.15s;
 }
@@ -256,7 +255,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
   display: inline-flex; align-items: center; gap: 7px;
   background: var(--accent); color: #fff;
   padding: 9px 16px;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
   box-shadow: 0 2px 8px rgba(110,18,48,0.28);
   transition: background 0.13s, transform 0.13s;
@@ -267,7 +266,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
 /* ── SPML badge ─────────────────────────────────────────── */
 .spml-badge {
   border: 1.5px solid var(--accent); color: var(--accent);
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   padding: 1px 5px; white-space: nowrap; font-style: normal;
 }
@@ -277,7 +276,7 @@ input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
   background: rgba(110,18,48,0.07);
   border-left: 2px solid var(--accent);
   color: var(--accent); padding: 11px 14px;
-  font-family: 'Newsreader', Georgia, serif; font-size: 15px; line-height: 1.5;
+  font-family: 'Newsreader Variable', Georgia, serif; font-size: 15px; line-height: 1.5;
 }
 html.dark .error-box { background: rgba(184,48,74,0.12); }
 
@@ -295,12 +294,12 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
 .accordion-trigger {
   width: 100%; display: flex; justify-content: space-between; align-items: center;
   padding: 15px 0; background: transparent;
-  font-family: 'Newsreader', Georgia, serif; font-size: 18px; color: var(--ink);
+  font-family: 'Newsreader Variable', Georgia, serif; font-size: 18px; color: var(--ink);
   text-align: left;
 }
 .accordion-content {
   padding: 0 0 15px;
-  font-family: 'Newsreader', Georgia, serif; font-size: 16px;
+  font-family: 'Newsreader Variable', Georgia, serif; font-size: 16px;
   color: var(--ink-2); line-height: 1.65;
 }
 
@@ -319,31 +318,31 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
   border-top: 2px solid var(--ink);
 }
 .modal-title {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: 'Newsreader Variable', Georgia, serif;
   font-size: 20px; font-weight: 400; color: var(--ink);
   margin: 0 0 10px;
 }
 .modal-body {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: 'Newsreader Variable', Georgia, serif;
   font-size: 15px; color: var(--ink-2); line-height: 1.6; margin: 0 0 22px;
 }
 .modal-actions { display: flex; gap: 10px; }
 .modal-cancel {
   flex: 1; padding: 12px;
   border: 1px solid var(--sep); color: var(--ink-2);
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
 }
 .modal-confirm {
   flex: 1; padding: 12px;
   background: var(--accent); color: #fff;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
 }
 
 /* ── Settings label (section header) ───────────────────── */
 .settings-label-sm {
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 10px; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase;
   color: var(--ink-3); display: block; margin-bottom: 10px;
 }
@@ -351,14 +350,14 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
 /* ── Clean fields (no underlines) ───────────────────────── */
 .field-name {
   background: transparent; border: none; outline: none;
-  font-family: 'Newsreader', Georgia, serif; font-size: 20px;
+  font-family: 'Newsreader Variable', Georgia, serif; font-size: 20px;
   color: var(--ink); width: 100%; padding: 8px 0;
 }
 .field-name::placeholder { color: var(--ink-3); }
 .field-name:focus { box-shadow: inset 0 -2px 0 var(--accent); }
 .field-count {
   width: 76px; text-align: center;
-  font-family: 'Public Sans', system-ui, sans-serif; font-style: normal;
+  font-family: 'Public Sans Variable', system-ui, sans-serif; font-style: normal;
   font-size: 22px; font-weight: 600; color: var(--ink);
   background: var(--bg2); border: none; outline: none; padding: 9px 0;
 }
@@ -371,7 +370,7 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
   min-width: 0; max-width: 100%;
   background: var(--bg2); color: var(--ink);
   padding: 7px 9px;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
   white-space: nowrap;
 }
@@ -380,7 +379,7 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
   display: inline-flex; align-items: center; gap: 4px;
   min-width: 0; max-width: 100%; text-align: left;
   color: var(--ink);
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 22px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
   line-height: 1.1;
 }
@@ -401,7 +400,7 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
 .name-chip {
   height: 46px;
   background: var(--bg2); color: var(--ink);
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 14px; font-weight: 700; letter-spacing: 0.02em;
 }
 .name-chip:active { background: var(--sep); }
@@ -413,6 +412,6 @@ html.dark .error-box { background: rgba(184,48,74,0.12); }
 .share-action {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   height: 52px;
-  font-family: 'Public Sans', system-ui, sans-serif;
+  font-family: 'Public Sans Variable', system-ui, sans-serif;
   font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
 }
