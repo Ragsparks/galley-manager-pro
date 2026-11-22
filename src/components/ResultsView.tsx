@@ -7,6 +7,7 @@ import { Share, Copy, ChevronDown } from 'lucide-react';
 import { CartNameButton } from './CartNameButton';
 import { ShareCard } from './ShareCard';
 import { ResultsSummary } from './ResultsSummary';
+import { applyCaptureStyles, getCaptureStyles } from '../utils/captureStyles';
 
 interface ResultsViewProps {
   carts: Cart[];
@@ -33,12 +34,14 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   const [isSharing, setIsSharing] = useState(false);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(true);
+  const infoToggled = useRef(false);
   const infoRef = useRef<HTMLDivElement>(null);
 
-  // Bring the expanded info into view so the person doesn't have to hunt for it.
+  // When the person reopens the info, bring it into view. Not on first render:
+  // it starts open and the page should stay at the top, on the carts.
   useEffect(() => {
-    if (infoOpen) infoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (infoOpen && infoToggled.current) infoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [infoOpen]);
 
   const now = new Date();
@@ -51,6 +54,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
     // Wait for the web fonts: capturing with fallback fonts is what makes text get cut.
     try { await document.fonts.ready; } catch { /* older browsers: carry on */ }
     await new Promise(r => setTimeout(r, 60));
+    const captureCss = await getCaptureStyles();
     // Follow the current theme so dark mode doesn't export light text on cream.
     const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F3EDE2';
     // html2canvas 1.4 options (the installed @types package is for 0.5, so type loosely)
@@ -60,7 +64,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       useCORS: true,
       scrollX: 0,
       scrollY: 0,
-      onclone: (_doc: Document, el: HTMLElement) => {
+      onclone: async (doc: Document, el: HTMLElement) => {
+        await applyCaptureStyles(doc, captureCss);
         // The card lives off-screen; bring its clone to the origin so nothing is cropped.
         const holder = el.parentElement;
         if (holder) { holder.style.left = '0px'; holder.style.top = '0px'; }
@@ -279,7 +284,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <button
         type="button"
         className="t-label"
-        onClick={() => setInfoOpen(v => !v)}
+        onClick={() => { infoToggled.current = true; setInfoOpen(v => !v); }}
         aria-expanded={infoOpen}
         style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '22px auto 0', color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3 }}
       >
@@ -339,7 +344,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                 borderLeft: '2px solid var(--accent)',
                 color: 'var(--accent)',
                 fontSize: 11,
-                fontFamily: 'Public Sans, sans-serif',
+                fontFamily: "'Public Sans Variable', sans-serif",
                 fontWeight: 700,
                 letterSpacing: '0.06em',
                 textAlign: 'center'

@@ -1,5 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@fontsource-variable/newsreader/standard.css';
+import '@fontsource-variable/newsreader/standard-italic.css';
+import '@fontsource-variable/public-sans/wght.css';
+import '@fontsource-variable/public-sans/wght-italic.css';
 import App from './App';
 import './index.css';
 

@@ -47,7 +47,7 @@ export const ShareCard = React.forwardRef<HTMLDivElement, ShareCardProps>(
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px 8px', marginBottom: 6 }}>
                 <span
                   style={{
-                    fontFamily: "'Public Sans', system-ui, sans-serif",
+                    fontFamily: "'Public Sans Variable', system-ui, sans-serif",
                     fontSize: 22, fontWeight: 700, letterSpacing: '0.03em',
                     textTransform: 'uppercase', lineHeight: 1.25,
                     overflowWrap: 'anywhere',
